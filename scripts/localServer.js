@@ -20,12 +20,16 @@ function todoList() {
   const deleteBtn = document.querySelector('[data-todo-delete]');
   deleteBtn.addEventListener('click', handleDeleteTodos);
 
-  function run() {
-    fetch(apiUrl)
-      .then(handleResponse)
-      .then((data) => {
-        renderTodos(data);
-      });
+  async function run() {
+    // const res = await fetch(apiUrl);
+    // const data = await handleResponse(res);
+    // renderTodos(data);
+    try {
+      const data = await fetch(apiUrl).then(handleResponse);
+      renderTodos(data);
+    } catch (e) {
+      console.warn(e);
+    }
   }
   run();
 
@@ -42,21 +46,21 @@ function todoList() {
     todoList.appendChild(fragment);
   }
 
-  function handleAddTodo(e) {
+  async function handleAddTodo(e) {
     e.preventDefault();
     const value = form.elements.title.value;
     const newTodo = { title: value, completed: false, authorId: 1 };
 
     // adaugam in server todo-ul nou
-    fetch(apiUrl, {
+    const todo = await fetch(apiUrl, {
       method: 'POST',
       body: JSON.stringify(newTodo),
       headers: {
         'Content-type': 'application/json',
       },
-    })
-      .then(handleResponse)
-      .then((todo) => renderTodos([todo]));
+    }).then(handleResponse);
+
+    renderTodos([todo]);
   }
 
   function createTodo(todo) {
@@ -93,7 +97,7 @@ function todoList() {
     }).then(handleResponse);
   }
 
-  function handleDeleteTodos() {
+  async function handleDeleteTodos() {
     const checkedItems = document.querySelectorAll('[id^=todoitem-]:checked');
 
     for (const check of checkedItems) {
@@ -101,11 +105,15 @@ function todoList() {
       const idToDelete = Number(check.id.split('-')[1]);
       const todoItem = check.parentNode;
 
-      fetch(`${apiUrl}/${idToDelete}`, {
-        method: 'DELETE',
-      })
-        .then(handleResponse)
-        .then((data) => todoItem.parentNode.removeChild(todoItem));
+      try {
+        await fetch(`${apiUrl}/${idToDelete}`, {
+          method: 'DELETE',
+        }).then(handleResponse);
+
+        todoItem.parentNode.removeChild(todoItem);
+      } catch (e) {
+        console.warn(e);
+      }
     }
   }
 }
